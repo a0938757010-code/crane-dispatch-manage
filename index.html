@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>吊車派車管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#C9938A; --soft-pink:#E8C4BC; --light-pink:#F5E6E3;
+  --blue:#7A9BAD; --soft-blue:#B8CFDA; --light-blue:#E3EDF3;
+  --sage:#9AAE9B; --light-sage:#E8F0E8;
+  --cream:#FAF3EE; --bg:#FAFAF8; --dark:#37352F; --medium:#5A5248; --gray:#9B9A97;
+  --line:#E7E2DC;
+  --danger:#B4685F;
+  --radius-sm:8px; --radius-md:14px; --radius-lg:20px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--dark);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:72px;
+}
+a{color:inherit;}
+button{font-family:inherit;}
+::selection{background:var(--soft-pink);}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:40;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  padding:14px 18px 12px;
+}
+.topbar-inner{max-width:960px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.brand{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.brand .co{font-weight:900; font-size:17px; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.brand .sub{font-size:12px; color:var(--gray); font-weight:500;}
+.today-pill{
+  flex-shrink:0;
+  background:var(--light-pink); color:var(--pink);
+  border-radius:999px; padding:6px 14px; font-weight:700; font-size:12.5px;
+  white-space:nowrap;
+}
+
+/* ---------- Tab nav ---------- */
+.tabbar{
+  position:sticky; top:57px; z-index:39;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.tabbar::-webkit-scrollbar{display:none;}
+.tabbar-inner{max-width:960px; margin:0 auto; display:flex; gap:4px; padding:0 14px;}
+.tab-btn{
+  flex-shrink:0;
+  background:none; border:none; cursor:pointer;
+  padding:12px 12px 11px;
+  font-size:14px; font-weight:500; color:var(--gray);
+  border-bottom:3px solid transparent;
+  transition:color .15s;
+}
+.tab-btn.active{color:var(--dark); font-weight:700; border-bottom-color:var(--pink);}
+.tab-btn:hover{color:var(--dark);}
+
+/* ---------- Layout ---------- */
+main{max-width:960px; margin:0 auto; padding:20px 16px 40px;}
+.view{display:none;}
+.view.active{display:block; animation:fadein .25s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+h1.page-title{font-size:20px; font-weight:900; margin:0 0 4px;}
+p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
+
+/* ---------- Cards ---------- */
+.card{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg);
+  padding:18px;
+}
+.stat-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;
+}
+@media (max-width:680px){ .stat-grid{grid-template-columns:repeat(2,1fr);} }
+.stat-card{
+  border-radius:var(--radius-md); padding:16px 16px 14px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.stat-card .num{font-size:26px; font-weight:900; line-height:1;}
+.stat-card .lbl{font-size:12.5px; font-weight:700; color:var(--medium);}
+.stat-1{background:var(--light-pink);} .stat-1 .num{color:var(--pink);}
+.stat-2{background:var(--light-blue);} .stat-2 .num{color:var(--blue);}
+.stat-3{background:var(--light-sage);} .stat-3 .num{color:var(--sage);}
+.stat-4{background:var(--cream); border:1px solid var(--soft-pink);} .stat-4 .num{color:var(--dark);}
+
+.section-head{display:flex; align-items:center; justify-content:space-between; margin:26px 0 12px;}
+.section-head h2{font-size:15.5px; font-weight:700; margin:0;}
+.section-head .hint{font-size:12px; color:var(--gray);}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border-radius:999px; border:1px solid transparent; cursor:pointer;
+  font-size:13.5px; font-weight:700; padding:9px 18px;
+  transition:filter .12s, transform .05s;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--pink); color:#fff;}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-outline{background:#fff; border-color:var(--line); color:var(--dark);}
+.btn-outline:hover{border-color:var(--pink); color:var(--pink);}
+.btn-soft{background:var(--light-blue); color:var(--blue);}
+.btn-soft:hover{filter:brightness(.97);}
+.btn-sage{background:var(--light-sage); color:#4d6350;}
+.btn-danger-line{background:#fff; color:var(--danger); border-color:#EAD4D1;}
+.btn-sm{padding:6px 12px; font-size:12.5px;}
+.btn-block{width:100%;}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+.fab{
+  position:fixed; right:18px; bottom:22px; z-index:45;
+  width:56px; height:56px; border-radius:50%;
+  background:var(--pink); color:#fff; border:none; box-shadow:0 6px 18px rgba(201,147,138,.45);
+  font-size:26px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+
+/* ---------- Today list / order cards ---------- */
+.order-card{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius-md);
+  padding:14px 16px; margin-bottom:10px;
+}
+.order-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px;}
+.order-time{font-weight:900; font-size:16px; color:var(--dark);}
+.order-tags{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+.tag{font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px;}
+.tag-boom{background:var(--light-blue); color:var(--blue);}
+.tag-out{background:var(--soft-pink); color:#fff;}
+.tag-notified{background:var(--light-sage); color:#4d6350;}
+.tag-pending{background:#F3ECE4; color:#9C8A63;}
+.order-loc{font-weight:700; font-size:14.5px; margin-bottom:2px;}
+.order-work{color:var(--medium); font-size:13.5px; margin-bottom:8px;}
+.order-meta{display:flex; flex-wrap:wrap; gap:8px 16px; font-size:12.5px; color:var(--medium); margin-bottom:10px;}
+.order-meta b{color:var(--dark); font-weight:700;}
+.order-note{
+  background:var(--light-pink); color:#8a5a51; font-size:12.5px; padding:8px 10px;
+  border-radius:var(--radius-sm); margin-bottom:10px;
+}
+.order-actions{display:flex; gap:8px; flex-wrap:wrap;}
+.empty-state{
+  text-align:center; padding:40px 20px; color:var(--gray);
+  border:1.5px dashed var(--line); border-radius:var(--radius-lg); font-size:13.5px;
+}
+
+/* ---------- Filters / search ---------- */
+.filter-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.input, select.input, textarea.input{
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:10px 12px; font-size:14px; font-family:inherit; color:var(--dark);
+  background:#fff; width:100%;
+}
+.input:focus, select.input:focus, textarea.input:focus{outline:none; border-color:var(--pink);}
+.search-box{flex:1; min-width:160px;}
+.filter-row select.input{width:auto; flex:1; min-width:120px;}
+
+/* ---------- Form ---------- */
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:640px){ .form-grid{grid-template-columns:1fr;} }
+.field{display:flex; flex-direction:column; gap:5px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:12.5px; font-weight:700; color:var(--medium);}
+.pill-toggle{display:flex; gap:8px; flex-wrap:wrap;}
+.pill-opt{
+  border:1.5px solid var(--line); border-radius:999px; padding:8px 16px;
+  font-size:13px; font-weight:700; cursor:pointer; color:var(--medium); background:#fff;
+}
+.pill-opt.on{border-color:var(--pink); background:var(--light-pink); color:var(--pink);}
+.form-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:22px; border-top:1px solid var(--line); padding-top:18px;}
+
+/* ---------- Settings ---------- */
+.settings-block{margin-bottom:28px;}
+.settings-block h2{font-size:15px; font-weight:700; margin:0 0 10px;}
+.roster-row{
+  display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--line);
+}
+.roster-row:last-child{border-bottom:none;}
+.roster-row .who{flex:1; min-width:0;}
+.roster-row .who .nm{font-weight:700; font-size:14px;}
+.roster-row .who .ph{font-size:12px; color:var(--gray);}
+.add-row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+.add-row .input{flex:1; min-width:110px;}
+.icon-btn{
+  background:none; border:none; cursor:pointer; color:var(--gray); font-size:13px; padding:4px 8px;
+}
+.icon-btn:hover{color:var(--danger);}
+
+/* ---------- Month-end ---------- */
+.month-picker{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
+.vehicle-block{
+  border:1px solid var(--line); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:10px; background:#fff;
+}
+.vehicle-block .vh-head{display:flex; justify-content:space-between; font-weight:700; margin-bottom:6px;}
+.vehicle-block .vh-head .plate{color:var(--blue);}
+.vehicle-block ul{margin:0; padding-left:18px; font-size:13px; color:var(--medium);}
+.vehicle-block ul li{margin-bottom:3px;}
+
+/* ---------- Modal ---------- */
+.modal-mask{
+  position:fixed; inset:0; background:rgba(55,53,47,.4); z-index:60;
+  display:none; align-items:flex-end; justify-content:center;
+}
+.modal-mask.show{display:flex;}
+@media (min-width:640px){ .modal-mask{align-items:center;} }
+.modal-box{
+  background:#fff; border-radius:20px 20px 0 0; max-width:420px; width:100%;
+  padding:22px; max-height:88vh; overflow-y:auto;
+}
+@media (min-width:640px){ .modal-box{border-radius:20px;} }
+.modal-box h3{margin:0 0 6px; font-size:16px; font-weight:900;}
+.modal-box p{font-size:13px; color:var(--medium); margin:0 0 16px;}
+.modal-box textarea{min-height:110px; resize:vertical; font-size:13px;}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--dark); color:#fff; padding:10px 20px; border-radius:999px;
+  font-size:13px; font-weight:700; opacity:0; transition:.25s; z-index:70; pointer-events:none;
+  white-space:nowrap;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+@media print{
+  .topbar,.tabbar,.fab,.no-print{display:none !important;}
+  body{padding:0;}
+  main{max-width:100%; padding:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="co" id="brandName">吊車派車管理</div>
+      <div class="sub">今天要派誰、去哪裡、做什麼，一目瞭然</div>
+    </div>
+    <div class="today-pill" id="todayPill">—</div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab-btn active" data-view="dashboard">儀表板</button>
+    <button class="tab-btn" data-view="list">訂單清單</button>
+    <button class="tab-btn" data-view="form">新增訂單</button>
+    <button class="tab-btn" data-view="monthly">月結彙整</button>
+    <button class="tab-btn" data-view="settings">基本設定</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section class="view active" id="view-dashboard">
+    <h1 class="page-title">儀表板</h1>
+    <p class="page-sub">今天的派工重點，一打開就看得到。</p>
+
+    <div class="stat-grid">
+      <div class="card stat-card stat-1"><div class="num" id="statToday">0</div><div class="lbl">今日工作</div></div>
+      <div class="card stat-card stat-2"><div class="num" id="statMonth">0</div><div class="lbl">本月工作</div></div>
+      <div class="card stat-card stat-3"><div class="num" id="statOutsource">0</div><div class="lbl">本月外調次數</div></div>
+      <div class="card stat-card stat-4"><div class="num" id="statPending">0</div><div class="lbl">尚未通知</div></div>
+    </div>
+
+    <div class="section-head"><h2>今天的工作</h2><span class="hint" id="todayCountHint"></span></div>
+    <div id="todayList"></div>
+
+    <div class="section-head"><h2>尚未通知</h2><span class="hint">司機或同行，建議前一天先通知</span></div>
+    <div id="pendingList"></div>
+  </section>
+
+  <!-- ===================== LIST ===================== -->
+  <section class="view" id="view-list">
+    <h1 class="page-title">訂單清單</h1>
+    <p class="page-sub">搜尋、篩選所有派工紀錄。</p>
+
+    <div class="filter-row">
+      <input class="input search-box" id="searchInput" placeholder="搜尋地點、工作內容、電話、備註…">
+      <select class="input" id="filterDriver"><option value="">全部司機</option></select>
+      <select class="input" id="filterVehicle"><option value="">全部車輛</option></select>
+      <select class="input" id="filterOutsource">
+        <option value="">全部類型</option>
+        <option value="own">自家車</option>
+        <option value="out">外調車</option>
+      </select>
+      <select class="input" id="filterRange">
+        <option value="all">所有時間</option>
+        <option value="today">今天</option>
+        <option value="week">本週</option>
+        <option value="month" selected>本月</option>
+      </select>
+    </div>
+
+    <div id="orderListWrap"></div>
+  </section>
+
+  <!-- ===================== FORM ===================== -->
+  <section class="view" id="view-form">
+    <h1 class="page-title" id="formTitle">新增訂單</h1>
+    <p class="page-sub">填好資料，存檔後可以直接產生司機通知內容。</p>
+
+    <div class="card">
+      <div class="form-grid">
+        <div class="field">
+          <label>日期 *</label>
+          <input class="input" type="date" id="f_date">
+        </div>
+        <div class="field">
+          <label>起始時間 *</label>
+          <select class="input" id="f_time"></select>
+        </div>
+        <div class="field full">
+          <label>工作地點 *</label>
+          <input class="input" type="text" id="f_location" placeholder="例如：新北市三重區重新路一段100號">
+        </div>
+        <div class="field">
+          <label>噸數</label>
+          <input class="input" type="text" id="f_tonnage" placeholder="例如：50噸">
+        </div>
+        <div class="field">
+          <label>大約做多久</label>
+          <input class="input" type="text" id="f_duration" placeholder="例如：2小時">
+        </div>
+        <div class="field full">
+          <label>工作內容 *</label>
+          <input class="input" type="text" id="f_work" placeholder="例如：吊放冷氣主機到頂樓">
+        </div>
+        <div class="field">
+          <label>客戶／現場聯絡人</label>
+          <input class="input" type="text" id="f_contact" placeholder="公司名稱或現場人員姓名">
+        </div>
+        <div class="field">
+          <label>客戶電話</label>
+          <input class="input" type="text" id="f_phone" placeholder="現場聯絡人電話">
+        </div>
+        <div class="field">
+          <label>是否需要打副桿／吊籃</label>
+          <select class="input" id="f_boom">
+            <option value="無">不需要</option>
+            <option value="副桿">副桿</option>
+            <option value="吊籃">吊籃</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label>是否外調（叫外車）</label>
+          <div class="pill-toggle">
+            <div class="pill-opt on" data-outsource="0">自家車出車</div>
+            <div class="pill-opt" data-outsource="1">外調車輛</div>
+          </div>
+        </div>
+
+        <div class="field" id="ownFieldDriver">
+          <label>司機</label>
+          <select class="input" id="f_driver"><option value="">請選擇司機</option></select>
+        </div>
+        <div class="field" id="ownFieldAssistant">
+          <label>助手</label>
+          <select class="input" id="f_assistant"><option value="">（無）</option></select>
+        </div>
+        <div class="field" id="ownFieldVehicle">
+          <label>車號</label>
+          <select class="input" id="f_vehicle"><option value="">請選擇車輛</option></select>
+        </div>
+        <div class="field full" id="outField" style="display:none;">
+          <label>外調廠商／司機與聯絡方式</label>
+          <input class="input" type="text" id="f_outvendor" placeholder="例如：OO吊車行 陳先生 0912-xxx-xxx">
+        </div>
+
+        <div class="field">
+          <label>簽單編號</label>
+          <input class="input" type="text" id="f_signno" placeholder="司機回報的簽單編號">
+        </div>
+        <div class="field">
+          <label>金額</label>
+          <input class="input" type="number" id="f_amount" placeholder="月底對帳前再填">
+        </div>
+
+        <div class="field full">
+          <label>備註</label>
+          <textarea class="input" id="f_notes" style="min-height:70px;" placeholder="紙本上會多寫的提醒事項…"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-outline" id="btnCancelForm">取消</button>
+        <button class="btn btn-primary" id="btnSaveOrder">儲存訂單</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MONTHLY ===================== -->
+  <section class="view" id="view-monthly">
+    <h1 class="page-title">月結彙整</h1>
+    <p class="page-sub">選擇月份，彙整這個月哪一台車去哪裡工作、叫了哪些外車，方便對帳。</p>
+
+    <div class="month-picker">
+      <input class="input" type="month" id="monthPicker" style="max-width:180px;">
+      <button class="btn btn-soft" id="btnExportCsv">匯出這個月 Excel(CSV)</button>
+      <button class="btn btn-outline no-print" id="btnPrintMonth">列印 / 存 PDF</button>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="card stat-card stat-1"><div class="num" id="mStatTotal">0</div><div class="lbl">本月總工作數</div></div>
+      <div class="card stat-card stat-2"><div class="num" id="mStatVehicles">0</div><div class="lbl">出勤自家車輛數</div></div>
+      <div class="card stat-card stat-3"><div class="num" id="mStatOut">0</div><div class="lbl">外調次數</div></div>
+    </div>
+
+    <div class="section-head"><h2>各車輛出勤明細</h2></div>
+    <div id="monthlyVehicles"></div>
+
+    <div class="section-head"><h2>外調明細</h2></div>
+    <div id="monthlyOutsource"></div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section class="view" id="view-settings">
+    <h1 class="page-title">基本設定</h1>
+    <p class="page-sub">先把公司資料、司機、助手、車輛設定好，新增訂單時就能直接選。</p>
+
+    <div class="settings-block card">
+      <h2>本公司資料</h2>
+      <div class="form-grid">
+        <div class="field"><label>公司名稱</label><input class="input" id="s_coname" placeholder="例如：OO吊車行"></div>
+        <div class="field"><label>公司電話</label><input class="input" id="s_cophone" placeholder="聯絡電話"></div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary btn-sm" id="btnSaveCompany">儲存公司資料</button></div>
+    </div>
+
+    <div class="settings-block card">
+      <h2>司機名單</h2>
+      <div id="driverRoster"></div>
+      <div class="add-row">
+        <input class="input" id="newDriverName" placeholder="司機姓名">
+        <input class="input" id="newDriverPhone" placeholder="電話（選填）">
+        <button class="btn btn-sage btn-sm" id="btnAddDriver">新增司機</button>
+      </div>
+    </div>
+
+    <div class="settings-block card">
+      <h2>助手名單</h2>
+      <div id="assistantRoster"></div>
+      <div class="add-row">
+        <input class="input" id="newAssistantName" placeholder="助手姓名">
+        <input class="input" id="newAssistantPhone" placeholder="電話（選填）">
+        <button class="btn btn-sage btn-sm" id="btnAddAssistant">新增助手</button>
+      </div>
+    </div>
+
+    <div class="settings-block card">
+      <h2>自家車輛</h2>
+      <div id="vehicleRoster"></div>
+      <div class="add-row">
+        <input class="input" id="newVehiclePlate" placeholder="車號">
+        <input class="input" id="newVehicleNote" placeholder="車型／噸數備註（選填）">
+        <button class="btn btn-sage btn-sm" id="btnAddVehicle">新增車輛</button>
+      </div>
+    </div>
+
+    <div class="settings-block card">
+      <h2>垃圾桶</h2>
+      <p class="page-sub" style="margin-bottom:12px;">刪除的訂單會先放在這裡，可以復原，也可以永久刪除。</p>
+      <div id="trashList"></div>
+    </div>
+
+    <div class="settings-block card">
+      <h2>資料備份</h2>
+      <p class="page-sub" style="margin-bottom:12px;">資料存在這個瀏覽器裡，換手機、換瀏覽器或清除資料前，請記得先匯出備份。</p>
+      <div class="add-row">
+        <button class="btn btn-outline" id="btnExportBackup">匯出備份檔</button>
+        <button class="btn btn-outline" id="btnImportBackupTrigger">匯入備份檔</button>
+        <input type="file" id="importBackupInput" accept=".json" style="display:none;">
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<button class="fab no-print" id="fabAdd" title="新增訂單">＋</button>
+
+<!-- Notify modal -->
+<div class="modal-mask" id="notifyModal">
+  <div class="modal-box">
+    <h3 id="notifyTitle">通知司機</h3>
+    <p id="notifyDesc">複製內容傳給司機，或直接開啟 LINE 傳送。</p>
+    <textarea class="input" id="notifyText" readonly></textarea>
+    <div class="form-actions" style="margin-top:14px;">
+      <button class="btn btn-outline" id="btnCloseNotify">關閉</button>
+      <button class="btn btn-soft" id="btnCopyNotify">複製文字</button>
+      <button class="btn btn-primary" id="btnLineNotify">開啟 LINE 傳送</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-mask" id="confirmModal">
+  <div class="modal-box">
+    <h3 id="confirmTitle">確定嗎？</h3>
+    <p id="confirmDesc"></p>
+    <div class="form-actions" style="margin-top:14px;">
+      <button class="btn btn-outline" id="btnConfirmCancel">取消</button>
+      <button class="btn btn-primary" id="btnConfirmOk">確定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= DATA LAYER ======================= */
+const STORAGE_KEY = "craneDispatchData_v1";
+
+function defaultData(){
+  return {
+    company:{ name:"", phone:"" },
+    drivers:[], assistants:[], vehicles:[],
+    orders:[],
+    trash:[]
+  };
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultData(), parsed);
+  }catch(e){
+    console.error("讀取資料失敗", e);
+    return defaultData();
+  }
+}
+
+function saveData(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  }catch(e){
+    console.error("儲存資料失敗", e);
+    toast("儲存失敗，請確認瀏覽器儲存空間");
+  }
+}
+
+let DATA = loadData();
+let editingOrderId = null;
+let currentOutsource = false;
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ======================= CONFIRM MODAL (畫面內彈窗，取代瀏覽器內建 confirm，避免被預覽環境擋掉) ======================= */
+function showConfirm(message, onOk){
+  document.getElementById("confirmDesc").textContent = message;
+  document.getElementById("confirmModal").classList.add("show");
+  const okBtn = document.getElementById("btnConfirmOk");
+  const cancelBtn = document.getElementById("btnConfirmCancel");
+  function cleanup(){
+    document.getElementById("confirmModal").classList.remove("show");
+    okBtn.onclick = null; cancelBtn.onclick = null;
+  }
+  okBtn.onclick = ()=>{ cleanup(); onOk(); };
+  cancelBtn.onclick = ()=>{ cleanup(); };
+}
+
+/* ======================= UTIL ======================= */
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+function pad(n){ return n<10 ? "0"+n : ""+n; }
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+function thisMonthStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1);
+}
+function fmtDate(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-");
+  return `${parseInt(m)}/${parseInt(d)}`;
+}
+function fmtDateFull(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-");
+  const wd = ["日","一","二","三","四","五","六"][new Date(iso+"T00:00:00").getDay()];
+  return `${parseInt(m)}月${parseInt(d)}日（週${wd}）`;
+}
+function nameOf(list, id){
+  const item = (list||[]).find(x=>x.id===id);
+  return item ? item.name || item.plate : "";
+}
+function mapsLink(loc){
+  return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(loc||"");
+}
+function esc(s){
+  return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ======================= TAB NAV ======================= */
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=> switchView(btn.dataset.view));
+});
+function switchView(view){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id==="view-"+view));
+  if(view==="dashboard") renderDashboard();
+  if(view==="list") renderList();
+  if(view==="monthly") renderMonthly();
+  if(view==="settings") renderSettings();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+/* ======================= DASHBOARD ======================= */
+function renderDashboard(){
+  document.getElementById("todayPill").textContent = fmtDateFull(todayStr());
+  document.getElementById("brandName").textContent = DATA.company.name || "吊車派車管理";
+
+  const today = todayStr();
+  const month = thisMonthStr();
+  const todays = DATA.orders.filter(o=>o.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  const monthly = DATA.orders.filter(o=>o.date && o.date.startsWith(month));
+  const outMonth = monthly.filter(o=>o.isOutsourced);
+  const pending = DATA.orders.filter(o=>!o.notified && o.date>=today)
+                    .sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+
+  document.getElementById("statToday").textContent = todays.length;
+  document.getElementById("statMonth").textContent = monthly.length;
+  document.getElementById("statOutsource").textContent = outMonth.length;
+  document.getElementById("statPending").textContent = pending.length;
+  document.getElementById("todayCountHint").textContent = todays.length + " 筆";
+
+  document.getElementById("todayList").innerHTML = todays.length
+    ? todays.map(o=>orderCardHtml(o, {compact:true})).join("")
+    : `<div class="empty-state">今天還沒有安排工作，點右下角「＋」新增一筆。</div>`;
+
+  document.getElementById("pendingList").innerHTML = pending.length
+    ? pending.slice(0,8).map(o=>orderCardHtml(o, {compact:true})).join("")
+    : `<div class="empty-state">目前沒有待通知的司機，很棒！</div>`;
+
+  bindOrderCardEvents();
+}
+
+/* ======================= ORDER CARD ======================= */
+function orderCardHtml(o){
+  const driverName = o.isOutsourced ? (o.outsourceVendor||"未填廠商") : (nameOf(DATA.drivers,o.driverId)||"未指派司機");
+  const assistantName = nameOf(DATA.assistants, o.assistantId);
+  const vehiclePlate = nameOf(DATA.vehicles, o.vehicleId);
+
+  let tags = "";
+  if(o.boomType && o.boomType!=="無") tags += `<span class="tag tag-boom">${esc(o.boomType)}</span>`;
+  if(o.isOutsourced) tags += `<span class="tag tag-out">外調</span>`;
+  tags += o.notified ? `<span class="tag tag-notified">已通知</span>` : `<span class="tag tag-pending">未通知</span>`;
+
+  const metaBits = [];
+  if(!o.isOutsourced){
+    metaBits.push(`司機 <b>${esc(driverName)}</b>`);
+    if(assistantName) metaBits.push(`助手 <b>${esc(assistantName)}</b>`);
+    if(vehiclePlate) metaBits.push(`車號 <b>${esc(vehiclePlate)}</b>`);
+  } else {
+    metaBits.push(`外調 <b>${esc(driverName)}</b>`);
+  }
+  if(o.tonnage) metaBits.push(`噸數 <b>${esc(o.tonnage)}</b>`);
+  if(o.duration) metaBits.push(`預估 <b>${esc(o.duration)}</b>`);
+  if(o.contact) metaBits.push(`聯絡人 <b>${esc(o.contact)}</b>`);
+  if(o.phone) metaBits.push(`電話 <b>${esc(o.phone)}</b>`);
+  if(o.signNo) metaBits.push(`簽單編號 <b>${esc(o.signNo)}</b>`);
+  if(o.amount) metaBits.push(`金額 <b>$${esc(o.amount)}</b>`);
+
+  return `
+  <div class="order-card" data-id="${o.id}">
+    <div class="order-top">
+      <div class="order-time">${fmtDate(o.date)} ${esc(o.time||"")}</div>
+      <div class="order-tags">${tags}</div>
+    </div>
+    <div class="order-loc">${esc(o.location||"（未填地點）")}</div>
+    <div class="order-work">${esc(o.work||"")}</div>
+    <div class="order-meta">${metaBits.map(m=>`<span>${m}</span>`).join("")}</div>
+    ${o.notes ? `<div class="order-note">備註：${esc(o.notes)}</div>` : ""}
+    <div class="order-actions">
+      <button class="btn btn-outline btn-sm act-map" data-id="${o.id}">在地圖開啟</button>
+      <button class="btn btn-soft btn-sm act-notify" data-id="${o.id}">${o.isOutsourced ? "通知同行" : "通知司機"}</button>
+      <button class="btn btn-outline btn-sm act-edit" data-id="${o.id}">編輯</button>
+      <button class="btn btn-danger-line btn-sm act-del" data-id="${o.id}">刪除</button>
+    </div>
+  </div>`;
+}
+
+function bindOrderCardEvents(){
+  document.querySelectorAll(".act-map").forEach(b=>{
+    b.onclick = ()=>{
+      const o = DATA.orders.find(x=>x.id===b.dataset.id);
+      if(o) window.open(mapsLink(o.location), "_blank");
+    };
+  });
+  document.querySelectorAll(".act-notify").forEach(b=>{
+    b.onclick = ()=> openNotifyModal(b.dataset.id);
+  });
+  document.querySelectorAll(".act-edit").forEach(b=>{
+    b.onclick = ()=> startEditOrder(b.dataset.id);
+  });
+  document.querySelectorAll(".act-del").forEach(b=>{
+    b.onclick = ()=>{
+      showConfirm("確定要刪除這筆訂單嗎？刪除後會先進垃圾桶，可以在「基本設定」找回。", ()=>{
+        const idx = DATA.orders.findIndex(x=>x.id===b.dataset.id);
+        if(idx>-1){
+          const removed = DATA.orders.splice(idx,1)[0];
+          removed.deletedAt = Date.now();
+          DATA.trash = DATA.trash || [];
+          DATA.trash.unshift(removed);
+        }
+        saveData();
+        renderDashboard(); renderList(); renderSettings();
+        toast("已刪除，可在基本設定的垃圾桶找回");
+      });
+    };
+  });
+}
+
+/* ======================= NOTIFY MODAL ======================= */
+function buildNotifyText(o){
+  const driverName = nameOf(DATA.drivers,o.driverId);
+  const vehiclePlate = nameOf(DATA.vehicles,o.vehicleId);
+  const lines = [
+    `【${o.isOutsourced ? "調車通知" : "派工通知"}】${fmtDateFull(o.date)} ${o.time||""}起`,
+    o.isOutsourced
+      ? (o.outsourceVendor ? `廠商：${o.outsourceVendor}` : null)
+      : (driverName ? `司機：${driverName}${vehiclePlate?"（"+vehiclePlate+"）":""}` : null),
+    `地點：${o.location||""}`,
+    `工作內容：${o.work||""}`,
+    o.tonnage ? `噸數：${o.tonnage}` : null,
+    o.duration ? `預估時間：${o.duration}` : null,
+    o.boomType && o.boomType!=="無" ? `需要：${o.boomType}` : null,
+    o.contact ? `客戶／聯絡人：${o.contact}` : null,
+    o.phone ? `現場電話：${o.phone}` : null,
+    o.notes ? `備註：${o.notes}` : null,
+    `導航：${mapsLink(o.location)}`,
+    (o.isOutsourced && DATA.company.name) ? `發包單位：${DATA.company.name}${DATA.company.phone?"（"+DATA.company.phone+"）":""}` : null
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+function openNotifyModal(id){
+  const o = DATA.orders.find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById("notifyTitle").textContent = o.isOutsourced ? "通知同行" : "通知司機";
+  document.getElementById("notifyDesc").textContent = o.isOutsourced
+    ? "複製內容傳給外調同行，或直接開啟 LINE 傳送。"
+    : "複製內容傳給司機，或直接開啟 LINE 傳送。";
+  document.getElementById("notifyText").value = buildNotifyText(o);
+  document.getElementById("notifyModal").classList.add("show");
+  document.getElementById("notifyModal").dataset.orderId = id;
+}
+document.getElementById("btnCloseNotify").onclick = ()=>{
+  document.getElementById("notifyModal").classList.remove("show");
+};
+document.getElementById("btnCopyNotify").onclick = ()=>{
+  const ta = document.getElementById("notifyText");
+  ta.select();
+  navigator.clipboard && navigator.clipboard.writeText(ta.value).then(()=>toast("已複製，可貼到 LINE 傳送"))
+    .catch(()=>{ document.execCommand("copy"); toast("已複製"); });
+};
+document.getElementById("btnLineNotify").onclick = ()=>{
+  const id = document.getElementById("notifyModal").dataset.orderId;
+  const text = document.getElementById("notifyText").value;
+  window.open("https://line.me/R/msg/text/?"+encodeURIComponent(text), "_blank");
+  // mark as notified
+  const o = DATA.orders.find(x=>x.id===id);
+  if(o){ o.notified = true; saveData(); }
+  document.getElementById("notifyModal").classList.remove("show");
+  renderDashboard(); renderList();
+};
+
+/* ======================= LIST VIEW ======================= */
+function refreshFilterOptions(){
+  const dSel = document.getElementById("filterDriver");
+  const vSel = document.getElementById("filterVehicle");
+  dSel.innerHTML = `<option value="">全部司機</option>` + DATA.drivers.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  vSel.innerHTML = `<option value="">全部車輛</option>` + DATA.vehicles.map(v=>`<option value="${v.id}">${esc(v.plate)}</option>`).join("");
+}
+
+function renderList(){
+  refreshFilterOptions();
+  applyListFilters();
+}
+
+function applyListFilters(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const driverId = document.getElementById("filterDriver").value;
+  const vehicleId = document.getElementById("filterVehicle").value;
+  const outType = document.getElementById("filterOutsource").value;
+  const range = document.getElementById("filterRange").value;
+
+  const today = todayStr();
+  const month = thisMonthStr();
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate()-dayOfWeek);
+  const weekStartStr = weekStart.getFullYear()+"-"+pad(weekStart.getMonth()+1)+"-"+pad(weekStart.getDate());
+
+  let list = DATA.orders.slice();
+
+  if(range==="today") list = list.filter(o=>o.date===today);
+  else if(range==="week") list = list.filter(o=>o.date>=weekStartStr);
+  else if(range==="month") list = list.filter(o=>o.date && o.date.startsWith(month));
+
+  if(driverId) list = list.filter(o=>o.driverId===driverId);
+  if(vehicleId) list = list.filter(o=>o.vehicleId===vehicleId);
+  if(outType==="own") list = list.filter(o=>!o.isOutsourced);
+  if(outType==="out") list = list.filter(o=>o.isOutsourced);
+
+  if(q){
+    list = list.filter(o=>{
+      const hay = [o.location,o.work,o.contact,o.phone,o.notes,o.outsourceVendor,nameOf(DATA.drivers,o.driverId),nameOf(DATA.vehicles,o.vehicleId)]
+        .join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  list.sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+
+  document.getElementById("orderListWrap").innerHTML = list.length
+    ? `<div style="font-size:12px;color:var(--gray);margin-bottom:10px;">共 ${list.length} 筆</div>` + list.map(o=>orderCardHtml(o)).join("")
+    : `<div class="empty-state">找不到符合條件的訂單。</div>`;
+
+  bindOrderCardEvents();
+}
+["searchInput","filterDriver","filterVehicle","filterOutsource","filterRange"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", applyListFilters);
+  document.getElementById(id).addEventListener("change", applyListFilters);
+});
+
+/* ======================= FORM VIEW ======================= */
+function populateTimeSelect(){
+  const sel = document.getElementById("f_time");
+  let opts = `<option value="">請選擇時間</option>`;
+  for(let h=0; h<24; h++){
+    opts += `<option value="${pad(h)}:00">${pad(h)}:00</option>`;
+    opts += `<option value="${pad(h)}:30">${pad(h)}:30</option>`;
+  }
+  sel.innerHTML = opts;
+}
+function ensureTimeOption(sel, value){
+  if(!value) return;
+  if(![...sel.options].some(o=>o.value===value)){
+    const opt = document.createElement("option");
+    opt.value = value; opt.textContent = value + "（舊資料）";
+    sel.appendChild(opt);
+  }
+}
+
+function refreshFormSelects(){
+  const dSel = document.getElementById("f_driver");
+  const aSel = document.getElementById("f_assistant");
+  const vSel = document.getElementById("f_vehicle");
+  dSel.innerHTML = `<option value="">請選擇司機</option>` + DATA.drivers.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  aSel.innerHTML = `<option value="">（無）</option>` + DATA.assistants.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("");
+  vSel.innerHTML = `<option value="">請選擇車輛</option>` + DATA.vehicles.map(v=>`<option value="${v.id}">${esc(v.plate)}</option>`).join("");
+}
+
+function resetForm(){
+  editingOrderId = null;
+  currentOutsource = false;
+  document.getElementById("formTitle").textContent = "新增訂單";
+  document.getElementById("f_date").value = todayStr();
+  document.getElementById("f_time").value = "";
+  document.getElementById("f_location").value = "";
+  document.getElementById("f_tonnage").value = "";
+  document.getElementById("f_duration").value = "";
+  document.getElementById("f_work").value = "";
+  document.getElementById("f_contact").value = "";
+  document.getElementById("f_phone").value = "";
+  document.getElementById("f_boom").value = "無";
+  document.getElementById("f_outvendor").value = "";
+  document.getElementById("f_signno").value = "";
+  document.getElementById("f_amount").value = "";
+  document.getElementById("f_notes").value = "";
+  refreshFormSelects();
+  document.getElementById("f_driver").value = "";
+  document.getElementById("f_assistant").value = "";
+  document.getElementById("f_vehicle").value = "";
+  setOutsourceUI(false);
+}
+
+function setOutsourceUI(isOut){
+  currentOutsource = isOut;
+  document.querySelectorAll(".pill-opt").forEach(p=>{
+    p.classList.toggle("on", (p.dataset.outsource==="1")===isOut);
+  });
+  document.getElementById("ownFieldDriver").style.display = isOut ? "none" : "flex";
+  document.getElementById("ownFieldAssistant").style.display = isOut ? "none" : "flex";
+  document.getElementById("ownFieldVehicle").style.display = isOut ? "none" : "flex";
+  document.getElementById("outField").style.display = isOut ? "flex" : "none";
+}
+document.querySelectorAll(".pill-opt").forEach(p=>{
+  p.addEventListener("click", ()=> setOutsourceUI(p.dataset.outsource==="1"));
+});
+
+function startEditOrder(id){
+  const o = DATA.orders.find(x=>x.id===id);
+  if(!o) return;
+  editingOrderId = id;
+  refreshFormSelects();
+  document.getElementById("formTitle").textContent = "編輯訂單";
+  document.getElementById("f_date").value = o.date||"";
+  ensureTimeOption(document.getElementById("f_time"), o.time);
+  document.getElementById("f_time").value = o.time||"";
+  document.getElementById("f_location").value = o.location||"";
+  document.getElementById("f_tonnage").value = o.tonnage||"";
+  document.getElementById("f_duration").value = o.duration||"";
+  document.getElementById("f_work").value = o.work||"";
+  document.getElementById("f_contact").value = o.contact||"";
+  document.getElementById("f_phone").value = o.phone||"";
+  document.getElementById("f_boom").value = o.boomType||"無";
+  document.getElementById("f_driver").value = o.driverId||"";
+  document.getElementById("f_assistant").value = o.assistantId||"";
+  document.getElementById("f_vehicle").value = o.vehicleId||"";
+  document.getElementById("f_outvendor").value = o.outsourceVendor||"";
+  document.getElementById("f_signno").value = o.signNo||"";
+  document.getElementById("f_amount").value = o.amount||"";
+  document.getElementById("f_notes").value = o.notes||"";
+  setOutsourceUI(!!o.isOutsourced);
+  switchView("form");
+}
+
+document.getElementById("btnSaveOrder").onclick = ()=>{
+  const date = document.getElementById("f_date").value;
+  const time = document.getElementById("f_time").value;
+  const location = document.getElementById("f_location").value.trim();
+  const work = document.getElementById("f_work").value.trim();
+
+  if(!date || !time || !location || !work){
+    toast("請填寫日期、時間、地點與工作內容");
+    return;
+  }
+
+  const payload = {
+    date, time, location,
+    tonnage: document.getElementById("f_tonnage").value.trim(),
+    duration: document.getElementById("f_duration").value.trim(),
+    work,
+    contact: document.getElementById("f_contact").value.trim(),
+    phone: document.getElementById("f_phone").value.trim(),
+    boomType: document.getElementById("f_boom").value,
+    isOutsourced: currentOutsource,
+    driverId: currentOutsource ? "" : document.getElementById("f_driver").value,
+    assistantId: currentOutsource ? "" : document.getElementById("f_assistant").value,
+    vehicleId: currentOutsource ? "" : document.getElementById("f_vehicle").value,
+    outsourceVendor: currentOutsource ? document.getElementById("f_outvendor").value.trim() : "",
+    signNo: document.getElementById("f_signno").value.trim(),
+    amount: document.getElementById("f_amount").value.trim(),
+    notes: document.getElementById("f_notes").value.trim(),
+  };
+
+  if(editingOrderId){
+    const o = DATA.orders.find(x=>x.id===editingOrderId);
+    Object.assign(o, payload);
+    toast("已更新訂單");
+  } else {
+    payload.id = uid();
+    payload.notified = false;
+    payload.createdAt = Date.now();
+    DATA.orders.push(payload);
+    toast("已新增訂單");
+  }
+  saveData();
+  resetForm();
+  switchView("dashboard");
+};
+document.getElementById("btnCancelForm").onclick = ()=>{ resetForm(); switchView("dashboard"); };
+document.getElementById("fabAdd").onclick = ()=>{ resetForm(); switchView("form"); };
+
+/* ======================= MONTHLY VIEW ======================= */
+function renderMonthly(){
+  const picker = document.getElementById("monthPicker");
+  if(!picker.value) picker.value = thisMonthStr();
+  buildMonthlyReport();
+}
+document.getElementById("monthPicker").addEventListener("change", buildMonthlyReport);
+
+function buildMonthlyReport(){
+  const month = document.getElementById("monthPicker").value || thisMonthStr();
+  const list = DATA.orders.filter(o=>o.date && o.date.startsWith(month));
+  const ownList = list.filter(o=>!o.isOutsourced);
+  const outList = list.filter(o=>o.isOutsourced);
+
+  document.getElementById("mStatTotal").textContent = list.length;
+  document.getElementById("mStatOut").textContent = outList.length;
+
+  const byVehicle = {};
+  ownList.forEach(o=>{
+    const key = o.vehicleId || "unassigned";
+    if(!byVehicle[key]) byVehicle[key] = [];
+    byVehicle[key].push(o);
+  });
+  document.getElementById("mStatVehicles").textContent = Object.keys(byVehicle).filter(k=>k!=="unassigned").length;
+
+  const vehicleHtml = Object.keys(byVehicle).map(key=>{
+    const plate = key==="unassigned" ? "未指派車輛" : (nameOf(DATA.vehicles,key)||"未知車輛");
+    const items = byVehicle[key].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+    return `<div class="vehicle-block">
+      <div class="vh-head"><span class="plate">${esc(plate)}</span><span>${items.length} 趟</span></div>
+      <ul>${items.map(o=>`<li>${fmtDate(o.date)} ${esc(o.time)}｜${esc(o.location)}｜${esc(o.work)}${o.driverId?"（司機："+esc(nameOf(DATA.drivers,o.driverId))+"）":""}${o.signNo?"｜簽單："+esc(o.signNo):""}${o.amount?"｜$"+esc(o.amount):""}</li>`).join("")}</ul>
+    </div>`;
+  }).join("");
+  document.getElementById("monthlyVehicles").innerHTML = vehicleHtml || `<div class="empty-state">這個月還沒有自家車出勤紀錄。</div>`;
+
+  const outHtml = outList.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(o=>`
+    <div class="vehicle-block">
+      <div class="vh-head"><span class="plate">${esc(o.outsourceVendor||"未填廠商")}</span><span>${fmtDate(o.date)} ${esc(o.time)}</span></div>
+      <ul><li>${esc(o.location)}｜${esc(o.work)}${o.tonnage?"｜"+esc(o.tonnage):""}${o.signNo?"｜簽單："+esc(o.signNo):""}${o.amount?"｜$"+esc(o.amount):""}</li></ul>
+    </div>`).join("");
+  document.getElementById("monthlyOutsource").innerHTML = outHtml || `<div class="empty-state">這個月沒有叫外車。</div>`;
+}
+
+document.getElementById("btnPrintMonth").onclick = ()=> window.print();
+
+document.getElementById("btnExportCsv").onclick = ()=>{
+  const month = document.getElementById("monthPicker").value || thisMonthStr();
+  const list = DATA.orders.filter(o=>o.date && o.date.startsWith(month))
+                  .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const headers = ["日期","時間","地點","噸數","工作內容","預估時間","副桿/吊籃","客戶/聯絡人","客戶電話","類型","司機","助手","車號","外調廠商","簽單編號","金額","是否已通知","備註"];
+  const rows = list.map(o=>[
+    o.date, o.time, o.location, o.tonnage, o.work, o.duration, o.boomType,
+    o.contact, o.phone, o.isOutsourced?"外調":"自家車",
+    o.isOutsourced?"":nameOf(DATA.drivers,o.driverId),
+    o.isOutsourced?"":nameOf(DATA.assistants,o.assistantId),
+    o.isOutsourced?"":nameOf(DATA.vehicles,o.vehicleId),
+    o.isOutsourced?o.outsourceVendor:"",
+    o.signNo||"", o.amount||"",
+    o.notified?"是":"否",
+    o.notes
+  ]);
+  const csvLines = [headers, ...rows].map(r=>
+    r.map(v=>{
+      v = (v===undefined||v===null) ? "" : String(v);
+      if(v.includes(",")||v.includes('"')||v.includes("\n")) v = '"'+v.replace(/"/g,'""')+'"';
+      return v;
+    }).join(",")
+  );
+  const csvContent = "\uFEFF" + csvLines.join("\r\n");
+  const blob = new Blob([csvContent], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `吊車派車彙整_${month}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("已匯出 CSV，可用 Excel 開啟");
+};
+
+/* ======================= SETTINGS ======================= */
+function renderSettings(){
+  document.getElementById("s_coname").value = DATA.company.name||"";
+  document.getElementById("s_cophone").value = DATA.company.phone||"";
+  renderRoster("driverRoster", DATA.drivers, removeDriver);
+  renderRoster("assistantRoster", DATA.assistants, removeAssistant);
+  renderRoster("vehicleRoster", DATA.vehicles, removeVehicle, true);
+  renderTrash();
+}
+function renderTrash(){
+  const el = document.getElementById("trashList");
+  const trash = DATA.trash || [];
+  if(!trash.length){ el.innerHTML = `<div class="empty-state" style="padding:20px;">垃圾桶是空的</div>`; return; }
+  el.innerHTML = trash.map(o=>`
+    <div class="roster-row">
+      <div class="who">
+        <div class="nm">${esc(fmtDate(o.date))} ${esc(o.time||"")}｜${esc(o.location||"")}</div>
+        <div class="ph">${esc(o.work||"")}</div>
+      </div>
+      <button class="btn btn-soft btn-sm" data-restore="${o.id}">復原</button>
+      <button class="icon-btn" data-purge="${o.id}">永久刪除</button>
+    </div>`).join("");
+  el.querySelectorAll("[data-restore]").forEach(b=>{
+    b.onclick = ()=>{
+      const id = b.dataset.restore;
+      const idx = DATA.trash.findIndex(x=>x.id===id);
+      if(idx>-1){
+        const item = DATA.trash.splice(idx,1)[0];
+        delete item.deletedAt;
+        DATA.orders.push(item);
+        saveData();
+        renderAll();
+        toast("已復原這筆訂單");
+      }
+    };
+  });
+  el.querySelectorAll("[data-purge]").forEach(b=>{
+    b.onclick = ()=>{
+      showConfirm("確定要永久刪除嗎？永久刪除後這筆資料就真的找不回來了。", ()=>{
+        DATA.trash = DATA.trash.filter(x=>x.id!==b.dataset.purge);
+        saveData();
+        renderTrash();
+        toast("已永久刪除");
+      });
+    };
+  });
+}
+function renderRoster(containerId, list, removeFn, isVehicle){
+  const el = document.getElementById(containerId);
+  if(!list.length){ el.innerHTML = `<div class="empty-state" style="padding:20px;">尚未新增任何資料</div>`; return; }
+  el.innerHTML = list.map(item=>`
+    <div class="roster-row">
+      <div class="who">
+        <div class="nm">${esc(isVehicle ? item.plate : item.name)}</div>
+        <div class="ph">${esc(isVehicle ? (item.note||"") : (item.phone||""))}</div>
+      </div>
+      <button class="icon-btn" data-id="${item.id}">刪除</button>
+    </div>`).join("");
+  el.querySelectorAll(".icon-btn").forEach(b=>{
+    b.onclick = ()=>{
+      showConfirm("確定要刪除嗎？（過去的訂單紀錄不會被刪除）", ()=> removeFn(b.dataset.id));
+    };
+  });
+}
+function removeDriver(id){ DATA.drivers = DATA.drivers.filter(d=>d.id!==id); saveData(); renderSettings(); }
+function removeAssistant(id){ DATA.assistants = DATA.assistants.filter(a=>a.id!==id); saveData(); renderSettings(); }
+function removeVehicle(id){ DATA.vehicles = DATA.vehicles.filter(v=>v.id!==id); saveData(); renderSettings(); }
+
+document.getElementById("btnSaveCompany").onclick = ()=>{
+  DATA.company.name = document.getElementById("s_coname").value.trim();
+  DATA.company.phone = document.getElementById("s_cophone").value.trim();
+  saveData();
+  document.getElementById("brandName").textContent = DATA.company.name || "吊車派車管理";
+  toast("已儲存公司資料");
+};
+document.getElementById("btnAddDriver").onclick = ()=>{
+  const name = document.getElementById("newDriverName").value.trim();
+  if(!name){ toast("請輸入司機姓名"); return; }
+  DATA.drivers.push({id:uid(), name, phone:document.getElementById("newDriverPhone").value.trim()});
+  saveData();
+  document.getElementById("newDriverName").value = "";
+  document.getElementById("newDriverPhone").value = "";
+  renderSettings();
+  toast("已新增司機");
+};
+document.getElementById("btnAddAssistant").onclick = ()=>{
+  const name = document.getElementById("newAssistantName").value.trim();
+  if(!name){ toast("請輸入助手姓名"); return; }
+  DATA.assistants.push({id:uid(), name, phone:document.getElementById("newAssistantPhone").value.trim()});
+  saveData();
+  document.getElementById("newAssistantName").value = "";
+  document.getElementById("newAssistantPhone").value = "";
+  renderSettings();
+  toast("已新增助手");
+};
+document.getElementById("btnAddVehicle").onclick = ()=>{
+  const plate = document.getElementById("newVehiclePlate").value.trim();
+  if(!plate){ toast("請輸入車號"); return; }
+  DATA.vehicles.push({id:uid(), plate, note:document.getElementById("newVehicleNote").value.trim()});
+  saveData();
+  document.getElementById("newVehiclePlate").value = "";
+  document.getElementById("newVehicleNote").value = "";
+  renderSettings();
+  toast("已新增車輛");
+};
+
+/* ======================= BACKUP ======================= */
+document.getElementById("btnExportBackup").onclick = ()=>{
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = todayStr();
+  a.href = url; a.download = `吊車派車備份_${stamp}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("已匯出備份檔");
+};
+document.getElementById("btnImportBackupTrigger").onclick = ()=>{
+  document.getElementById("importBackupInput").click();
+};
+document.getElementById("importBackupInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const parsed = JSON.parse(evt.target.result);
+      showConfirm("匯入將會覆蓋目前瀏覽器內的所有資料，確定要繼續嗎？", ()=>{
+        DATA = Object.assign(defaultData(), parsed);
+        saveData();
+        renderAll();
+        toast("匯入成功");
+      });
+    }catch(err){
+      toast("備份檔格式不正確，匯入失敗");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+/* ======================= INIT ======================= */
+function renderAll(){
+  renderDashboard();
+  renderList();
+  renderSettings();
+  refreshFormSelects();
+}
+populateTimeSelect();
+resetForm();
+renderAll();
+
+})();
+</script>
+</body>
+</html>
