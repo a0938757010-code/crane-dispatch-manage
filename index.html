@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --pink:#C9938A; --soft-pink:#E8C4BC; --light-pink:#F5E6E3;
@@ -240,9 +241,36 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
   body{padding:0;}
   main{max-width:100%; padding:0;}
 }
+
+/* ---------- Auth ---------- */
+.auth-mask{
+  position:fixed; inset:0; z-index:100;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.auth-mask.hidden{display:none;}
+.auth-box{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius-lg);
+  padding:28px; max-width:340px; width:100%;
+}
+.auth-box h2{margin:0 0 6px; font-size:18px; font-weight:900;}
+.auth-box p{margin:0 0 18px; font-size:13px; color:var(--medium);}
+.auth-box .input + .input{margin-top:10px;}
+.auth-error{color:var(--danger); font-size:12.5px; margin-top:10px; display:none;}
 </style>
 </head>
 <body>
+
+<div class="auth-mask" id="authMask">
+  <div class="auth-box">
+    <h2>登入</h2>
+    <p>請輸入帳號密碼才能使用派工資料</p>
+    <input class="input" type="email" id="loginEmail" placeholder="Email" autocomplete="username">
+    <input class="input" type="password" id="loginPassword" placeholder="密碼" autocomplete="current-password">
+    <button class="btn btn-primary btn-block" id="btnLogin" style="margin-top:14px;">登入</button>
+    <div class="auth-error" id="loginError"></div>
+  </div>
+</div>
 
 <div class="topbar">
   <div class="topbar-inner">
@@ -435,6 +463,12 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
     <p class="page-sub">先把公司資料、司機、助手、車輛設定好，新增訂單時就能直接選。</p>
 
     <div class="settings-block card">
+      <h2>帳號</h2>
+      <p class="page-sub" style="margin-bottom:12px;" id="loggedInAs"></p>
+      <button class="btn btn-outline btn-sm" id="btnLogout">登出</button>
+    </div>
+
+    <div class="settings-block card">
       <h2>本公司資料</h2>
       <div class="form-grid">
         <div class="field"><label>公司名稱</label><input class="input" id="s_coname" placeholder="例如：OO吊車行"></div>
@@ -528,6 +562,9 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
 
 /* ======================= DATA LAYER ======================= */
 const STORAGE_KEY = "craneDispatchData_v1";
+const SUPABASE_URL = "https://uswymhfiquiotoqbxopo.supabase.co";
+const SUPABASE_KEY = "sb_publishable_VXw1yDbBIHPpYH5SJQ4Kjg_X-p-Gitf";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function defaultData(){
   return {
@@ -538,28 +575,41 @@ function defaultData(){
   };
 }
 
-function loadData(){
+function loadLocalCache(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultData();
-    const parsed = JSON.parse(raw);
-    return Object.assign(defaultData(), parsed);
+    return Object.assign(defaultData(), JSON.parse(raw));
   }catch(e){
-    console.error("讀取資料失敗", e);
+    console.error("讀取本機備份失敗", e);
     return defaultData();
   }
 }
 
-function saveData(){
+async function loadRemoteData(){
+  const { data, error } = await sb.from("app_data").select("data").eq("id","main").single();
+  if(error || !data){
+    console.error("讀取雲端資料失敗", error);
+    toast("讀取雲端資料失敗，先顯示本機備份");
+    return loadLocalCache();
+  }
+  return Object.assign(defaultData(), data.data);
+}
+
+async function saveData(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
   }catch(e){
-    console.error("儲存資料失敗", e);
-    toast("儲存失敗，請確認瀏覽器儲存空間");
+    console.error("本機備份失敗", e);
+  }
+  const { error } = await sb.from("app_data").upsert({ id:"main", data:DATA, updated_at:new Date().toISOString() });
+  if(error){
+    console.error("雲端同步失敗", error);
+    toast("雲端同步失敗，請檢查網路後重新整理再試一次");
   }
 }
 
-let DATA = loadData();
+let DATA = defaultData();
 let editingOrderId = null;
 let currentOutsource = false;
 
@@ -1210,6 +1260,46 @@ document.getElementById("importBackupInput").addEventListener("change", function
   e.target.value = "";
 });
 
+/* ======================= AUTH ======================= */
+function showAuthMask(show){
+  document.getElementById("authMask").classList.toggle("hidden", !show);
+}
+
+async function startApp(session){
+  document.getElementById("loggedInAs").textContent = "登入帳號：" + session.user.email;
+  DATA = await loadRemoteData();
+  populateTimeSelect();
+  resetForm();
+  renderAll();
+  showAuthMask(false);
+}
+
+document.getElementById("btnLogin").onclick = async ()=>{
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errEl = document.getElementById("loginError");
+  errEl.style.display = "none";
+  if(!email || !password){
+    errEl.textContent = "請輸入 Email 跟密碼";
+    errEl.style.display = "block";
+    return;
+  }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    errEl.textContent = "登入失敗，請確認帳號密碼是否正確";
+    errEl.style.display = "block";
+    return;
+  }
+  startApp(data.session);
+};
+
+document.getElementById("btnLogout").onclick = ()=>{
+  showConfirm("確定要登出嗎？", async ()=>{
+    await sb.auth.signOut();
+    location.reload();
+  });
+};
+
 /* ======================= INIT ======================= */
 function renderAll(){
   renderDashboard();
@@ -1217,9 +1307,15 @@ function renderAll(){
   renderSettings();
   refreshFormSelects();
 }
-populateTimeSelect();
-resetForm();
-renderAll();
+
+(async function initAuth(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    startApp(data.session);
+  }else{
+    showAuthMask(true);
+  }
+})();
 
 })();
 </script>
