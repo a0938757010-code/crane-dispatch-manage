@@ -264,9 +264,8 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
 <div class="auth-mask" id="authMask">
   <div class="auth-box">
     <h2>登入</h2>
-    <p>請輸入帳號密碼才能使用派工資料</p>
-    <input class="input" type="email" id="loginEmail" placeholder="Email" autocomplete="username">
-    <input class="input" type="password" id="loginPassword" placeholder="密碼" autocomplete="current-password">
+    <p>請輸入密碼才能使用派工資料</p>
+    <input class="input" type="password" id="loginPassword" placeholder="密碼" autocomplete="current-password" inputmode="numeric">
     <button class="btn btn-primary btn-block" id="btnLogin" style="margin-top:14px;">登入</button>
     <div class="auth-error" id="loginError"></div>
   </div>
@@ -1288,17 +1287,18 @@ async function startApp(session){
   showAuthMask(false);
 }
 
+const ACCOUNT_EMAIL = "a0938757010@gmail.com";
+
 document.getElementById("btnLogin").onclick = async ()=>{
-  const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
   const errEl = document.getElementById("loginError");
   errEl.style.display = "none";
-  if(!email || !password){
-    errEl.textContent = "請輸入 Email 跟密碼";
+  if(!password){
+    errEl.textContent = "請輸入密碼";
     errEl.style.display = "block";
     return;
   }
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email: ACCOUNT_EMAIL, password });
   if(error){
     errEl.textContent = "登入失敗，請確認帳號密碼是否正確";
     errEl.style.display = "block";
