@@ -475,7 +475,11 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
     <div class="settings-block card">
       <h2>帳號</h2>
       <p class="page-sub" style="margin-bottom:12px;" id="loggedInAs"></p>
-      <button class="btn btn-outline btn-sm" id="btnLogout">登出</button>
+      <div class="add-row">
+        <input class="input" type="password" id="changePasswordInput" placeholder="設定新密碼（至少6碼）">
+        <button class="btn btn-sage btn-sm" id="btnChangePassword">更新密碼</button>
+      </div>
+      <button class="btn btn-outline btn-sm" id="btnLogout" style="margin-top:10px;">登出</button>
     </div>
 
     <div class="settings-block card">
@@ -1308,6 +1312,21 @@ document.getElementById("btnLogout").onclick = ()=>{
     await sb.auth.signOut();
     location.reload();
   });
+};
+
+document.getElementById("btnChangePassword").onclick = async ()=>{
+  const pw = document.getElementById("changePasswordInput").value;
+  if(!pw || pw.length < 6){
+    toast("密碼至少要 6 個字元");
+    return;
+  }
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if(error){
+    toast("更新失敗：" + error.message, 6000);
+    return;
+  }
+  document.getElementById("changePasswordInput").value = "";
+  toast("密碼更新成功！下次登入請用新密碼");
 };
 
 document.getElementById("btnSetNewPassword").onclick = async ()=>{
