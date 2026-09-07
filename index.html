@@ -272,6 +272,16 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
   </div>
 </div>
 
+<div class="auth-mask hidden" id="resetMask">
+  <div class="auth-box">
+    <h2>設定新密碼</h2>
+    <p>請輸入一組新密碼（建議 6 位數字）</p>
+    <input class="input" type="password" id="newPassword" placeholder="新密碼" autocomplete="new-password">
+    <button class="btn btn-primary btn-block" id="btnSetNewPassword" style="margin-top:14px;">確定設定</button>
+    <div class="auth-error" id="resetError"></div>
+  </div>
+</div>
+
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -1300,6 +1310,35 @@ document.getElementById("btnLogout").onclick = ()=>{
   });
 };
 
+document.getElementById("btnSetNewPassword").onclick = async ()=>{
+  const pw = document.getElementById("newPassword").value;
+  const errEl = document.getElementById("resetError");
+  errEl.style.display = "none";
+  if(!pw || pw.length < 6){
+    errEl.textContent = "密碼至少要 6 個字元";
+    errEl.style.display = "block";
+    return;
+  }
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if(error){
+    errEl.textContent = "設定失敗：" + error.message;
+    errEl.style.display = "block";
+    return;
+  }
+  document.getElementById("resetMask").classList.add("hidden");
+  toast("新密碼設定成功！");
+  history.replaceState(null, "", location.pathname);
+  const { data:sessionData } = await sb.auth.getSession();
+  startApp(sessionData.session);
+};
+
+sb.auth.onAuthStateChange((event, session)=>{
+  if(event === "PASSWORD_RECOVERY"){
+    showAuthMask(false);
+    document.getElementById("resetMask").classList.remove("hidden");
+  }
+});
+
 /* ======================= INIT ======================= */
 function renderAll(){
   renderDashboard();
@@ -1309,6 +1348,9 @@ function renderAll(){
 }
 
 (async function initAuth(){
+  if(location.hash.includes("type=recovery")){
+    return;
+  }
   const { data } = await sb.auth.getSession();
   if(data.session){
     startApp(data.session);
