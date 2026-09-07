@@ -230,9 +230,9 @@ p.page-sub{color:var(--medium); font-size:13.5px; margin:0 0 18px;}
 /* ---------- Toast ---------- */
 .toast{
   position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
-  background:var(--dark); color:#fff; padding:10px 20px; border-radius:999px;
+  background:var(--dark); color:#fff; padding:10px 20px; border-radius:16px;
   font-size:13px; font-weight:700; opacity:0; transition:.25s; z-index:70; pointer-events:none;
-  white-space:nowrap;
+  max-width:88vw; white-space:pre-wrap; text-align:center;
 }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
@@ -590,7 +590,7 @@ async function loadRemoteData(){
   const { data, error } = await sb.from("app_data").select("data").eq("id","main").single();
   if(error || !data){
     console.error("讀取雲端資料失敗", error);
-    toast("讀取雲端資料失敗，先顯示本機備份");
+    toast("讀取雲端資料失敗：" + (error && error.message ? error.message : "無資料") + "（先顯示本機備份）", 8000);
     return loadLocalCache();
   }
   return Object.assign(defaultData(), data.data);
@@ -605,7 +605,7 @@ async function saveData(){
   const { error } = await sb.from("app_data").upsert({ id:"main", data:DATA, updated_at:new Date().toISOString() });
   if(error){
     console.error("雲端同步失敗", error);
-    toast("雲端同步失敗，請檢查網路後重新整理再試一次");
+    toast("雲端同步失敗：" + (error.message || "未知錯誤"), 8000);
   }
 }
 
@@ -630,12 +630,12 @@ function showConfirm(message, onOk){
 }
 
 /* ======================= UTIL ======================= */
-function toast(msg){
+function toast(msg, duration){
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=>t.classList.remove("show"), 2200);
+  toast._tm = setTimeout(()=>t.classList.remove("show"), duration||2200);
 }
 
 function pad(n){ return n<10 ? "0"+n : ""+n; }
